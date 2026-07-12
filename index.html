@@ -1,156 +1,38 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+from pathlib import Path
+import re
 
-  <title>Instagram Contacto</title>
+base = Path("/mnt/data/telegram_n26_landing")
 
-  <!-- META PIXEL -->
-  <!-- 778258931232821 -->
+index = (base / "index.html").read_text(encoding="utf-8")
+css = (base / "styles.css").read_text(encoding="utf-8")
+config = (base / "config.js").read_text(encoding="utf-8")
+script = (base / "script.js").read_text(encoding="utf-8")
 
-  <script>
-    !function(f,b,e,v,n,t,s)
-    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-    n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t,s)}(window, document,'script',
-    'https://connect.facebook.net/en_US/fbevents.js');
+# Remove external file references
+index = re.sub(r'\s*<link rel="stylesheet" href="\./styles\.css" />', '', index)
+index = re.sub(r'\s*<script src="\./config\.js"></script>', '', index)
+index = re.sub(r'\s*<script src="\./script\.js"></script>', '', index)
 
-    fbq('init', '778258931232821');
-    fbq('track', 'PageView');
-  </script>
-
-  <noscript>
-    <img height="1" width="1" style="display:none"
-      src="https://www.facebook.com/tr?id=778258931232821&ev=PageView&noscript=1"/>
-  </noscript>
-
-  <!-- /META PIXEL -->
-
-  <style>
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
-    }
-
-    body {
-      min-height: 100vh;
-      background: linear-gradient(180deg, #f7f7f7 0%, #ffffff 100%);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 430px;
-      background: #ffffff;
-      border-radius: 24px;
-      padding: 40px 28px;
-      text-align: center;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-    }
-
-    .logo {
-      width: 76px;
-      height: 76px;
-      margin: 0 auto 24px;
-      border-radius: 22px;
-      background: linear-gradient(45deg, #f58529, #dd2a7b, #8134af, #515bd4);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      font-size: 28px;
-      font-weight: bold;
-    }
-
-    h1 {
-      font-size: 26px;
-      color: #111;
-      margin-bottom: 18px;
-      line-height: 1.3;
-    }
-
-    p {
-      color: #666;
-      font-size: 16px;
-      line-height: 1.6;
-      margin-bottom: 34px;
-    }
-
-    .btn {
-      display: block;
-      width: 100%;
-      padding: 18px;
-      border-radius: 14px;
-      text-decoration: none;
-      background: linear-gradient(90deg, #ff416c, #ff4b2b);
-      color: white;
-      font-size: 18px;
-      font-weight: bold;
-      transition: 0.2s ease;
-    }
-
-    .btn:active {
-      transform: scale(0.98);
-    }
-
-    .safe {
-      margin-top: 18px;
-      font-size: 13px;
-      color: #999;
-    }
-
+# Insert CSS before </head>
+index = index.replace("</head>", f"""  <style>
+{css}
   </style>
-</head>
+</head>""")
 
-<body>
-
-  <div class="container">
-
-    <div class="logo">
-      IG
-    </div>
-
-    <h1>
-      Visita nuestro perfil de Instagram
-    </h1>
-
-    <p>
-      Haz clic en el botón de abajo, abre nuestro perfil de Instagram
-      y envíanos un mensaje directo.  
-      Te estamos esperando.
-    </p>
-
-    <a
-      class="btn"
-      href="https://instagram.com/ociecorwin1642"
-      onclick="trackLeadEvent()"
-    >
-      Enviar mensaje
-    </a>
-
-    <div class="safe">
-      Perfil oficial
-    </div>
-
-  </div>
-
+# Insert config and script before </body>
+combined_js = f"""
   <script>
-    function trackLeadEvent() {
-      if (typeof fbq !== 'undefined') {
-        fbq('track', 'Lead');
-      }
-    }
+{config}
   </script>
 
-</body>
-</html>
+  <script>
+{script}
+  </script>
+"""
+index = index.replace("</body>", combined_js + "\n</body>")
+
+out = Path("/mnt/data/index.html")
+out.write_text(index, encoding="utf-8")
+
+print("Готово:", out)
+print("Размер:", out.stat().st_size, "байт")
